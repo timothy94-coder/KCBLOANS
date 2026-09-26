@@ -19,7 +19,7 @@ import {
    Real M-Pesa: starlink-backend-yb3n.onrender.com
 ═══════════════════════════════════════════════════════════════ */
 
-const MPESA_BASE = "http://localhost:5000/api/runPrompt";
+const MPESA_BASE = "http://localhost:5000";
 
 /* ── Loan packages (amount, fee, repayment = amount + fee + interest) ── */
 const LOAN_GROUPS = [
