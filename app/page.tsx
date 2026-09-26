@@ -439,176 +439,829 @@ function Ticker({ items }) {
   );
 }
 
-/* ── SCREEN 1: HERO ── */
-function HeroScreen({ onStart }) {
-  return (
-    <div style={{ background: "#f9fafb", minHeight: "100vh" }}>
 
-      {/* HEADER */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px 24px",
-        background: "#fff",
-        borderBottom: "1px solid #eee"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/kcb-hero.png" style={{ width: 40 }} />
-          <span style={{ fontWeight: 600, fontSize: 16 }}>
+/* ── SCREEN 1: HERO ── */
+/* ── SCREEN 1: HERO ── */
+
+function ShieldIcon() {
+  return (
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M12 3 5 6v5c0 4.7 2.9 8.6 7 10 4.1-1.4 7-5.3 7-10V6l-7-3Z" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="5" y="10" width="14" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 2.5 2.5L16 9" />
+    </svg>
+  );
+}
+
+function HeroScreen({ onStart }) {
+  const steps = ["Apply", "Approve", "Receive"];
+
+  const features = [
+    {
+      title: "Quick Approval",
+      description:
+        "Get pre-approved in minutes with our streamlined digital process.",
+      icon: <ShieldIcon />,
+    },
+    {
+      title: "Flexible Terms",
+      description:
+        "Choose loan terms from 30 to 90 days that fit your budget.",
+      icon: <LockIcon />,
+    },
+    {
+      title: "No Hidden Fees",
+      description:
+        "Transparent pricing with no surprises. Know exactly what you'll pay.",
+      icon: <CheckIcon />,
+    },
+  ];
+
+  return (
+    <div className="kcb-page">
+      {/* ───────────────── HEADER ───────────────── */}
+      <header className="kcb-header">
+        <div className="kcb-header-brand">
+          <img
+            src="/kcb-hero.png"
+            alt="KCB"
+            className="kcb-header-logo"
+          />
+
+          <span className="kcb-header-title">
             M-PESA Loans
           </span>
         </div>
 
-        <span style={{ fontSize: 14, color: "#6b7280" }}>Help</span>
-      </div>
+        <button className="kcb-help">
+          Help
+        </button>
+      </header>
 
+      {/* ───────────────── MAIN ───────────────── */}
+      <main>
 
-      {/* HERO */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "60px 80px",
-        gap: 40
-      }}>
+        {/* HERO */}
+        <section className="kcb-hero-section">
+          <div className="kcb-hero-inner">
 
-        {/* LEFT */}
-        <div style={{ maxWidth: 500 }}>
-          <h1 style={{
-            fontSize: 42,
-            fontWeight: 800,
-            color: "#1f3b73",
-            lineHeight: 1.2
-          }}>
-            Get Up To <span style={{ color: "#dc2626" }}>Ksh 100,000</span>
-          </h1>
+            {/* LEFT SIDE */}
+            <div className="kcb-hero-copy">
 
-          <p style={{
-            marginTop: 14,
-            fontSize: 16,
-            color: "#6b7280"
-          }}>
-            Low 5.5% interest rate for qualified borrowers
-          </p>
+              <h1 className="kcb-heading">
+                Get Up To{" "}
+                <span>Ksh 100,000</span>
+              </h1>
 
-          <div style={{
-            display: "flex",
-            gap: 20,
-            marginTop: 20,
-            marginBottom: 20
-          }}>
-            {["Apply", "Approve", "Receive"].map((t, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "#1f3b73",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13
-                }}>
-                  {i + 1}
+              <p className="kcb-subheading">
+                Low 5.5% interest rate for qualified borrowers
+              </p>
+
+              {/* STEPS */}
+              <div className="kcb-steps">
+                {steps.map((step, index) => (
+                  <div className="kcb-step" key={step}>
+                    <div className="kcb-step-number">
+                      {index + 1}
+                    </div>
+
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <button
+                type="button"
+                className="kcb-apply-button"
+                onClick={onStart}
+              >
+                Apply Now
+              </button>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className="kcb-hero-visual">
+
+              <img
+                src="/kcb-hero.png"
+                alt="KCB M-PESA Loans"
+                className="kcb-hero-image"
+              />
+
+              {/* FLOATING INFO CARD */}
+              <div className="kcb-floating-card">
+
+                <div className="kcb-floating-item">
+                  <strong>Ksh 100K</strong>
+                  <span>Max Amount</span>
                 </div>
-                <span style={{ fontSize: 14 }}>{t}</span>
+
+                <div className="kcb-floating-divider" />
+
+                <div className="kcb-floating-item">
+                  <strong className="red">
+                    5.5%
+                  </strong>
+                  <span>Interest</span>
+                </div>
+
+                <div className="kcb-floating-divider" />
+
+                <div className="kcb-floating-item">
+                  <strong className="green">
+                    3 Steps
+                  </strong>
+                  <span>Process</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ───────────────── FEATURES ───────────────── */}
+        <section className="kcb-features-section">
+          <div className="kcb-features">
+
+            {features.map((feature) => (
+              <div
+                className="kcb-feature-card"
+                key={feature.title}
+              >
+                <div className="kcb-feature-icon">
+                  {feature.icon}
+                </div>
+
+                <h3>
+                  {feature.title}
+                </h3>
+
+                <p>
+                  {feature.description}
+                </p>
               </div>
             ))}
+
+          </div>
+        </section>
+
+        {/* ───────────────── SECURITY ROW ───────────────── */}
+        <section className="kcb-security-section">
+
+          <div className="kcb-security-item">
+            <span className="kcb-security-icon">
+              <ShieldIcon />
+            </span>
+            <span>Secure</span>
           </div>
 
-          <button
-            onClick={onStart}
-            style={{
-              background: "#dc2626",
-              color: "#fff",
-              padding: "14px 22px",
-              borderRadius: 8,
-              border: "none",
-              fontWeight: 700,
-              fontSize: 15,
-              cursor: "pointer"
-            }}
-          >
-            Apply Now
-          </button>
+          <div className="kcb-security-item">
+            <span className="kcb-security-icon">
+              <CheckIcon />
+            </span>
+            <span>Licensed</span>
+          </div>
+
+          <div className="kcb-security-item">
+            <span className="kcb-security-icon">
+              <LockIcon />
+            </span>
+            <span>Encrypted</span>
+          </div>
+
+        </section>
+
+      </main>
+
+      {/* ───────────────── FOOTER ───────────────── */}
+      <footer className="kcb-footer">
+
+        <div className="kcb-footer-inner">
+
+          {/* BRAND */}
+          <div className="kcb-footer-brand">
+            <img
+              src="/kcb-logo.png"
+              alt="KCB"
+              className="kcb-footer-logo"
+            />
+
+            <span>
+              KCB M-PESA Loans
+            </span>
+          </div>
+
+          {/* LINKS */}
+          <nav className="kcb-footer-links">
+            <button>Privacy</button>
+            <button>Terms</button>
+            <button>Contact</button>
+          </nav>
+
+          {/* COPYRIGHT */}
+          <div className="kcb-footer-copy">
+            © 2026 KCB M-PESA Loans Kenya. Licensed by CBK.
+          </div>
+
         </div>
 
+      </footer>
 
-        {/* RIGHT */}
-        <div style={{ position: "relative" }}>
-          <img
-            src="/kcb-hero.png"
-            style={{
-              width: 420,
-              borderRadius: 20
-            }}
-          />
+      {/* ───────────────── STYLES ───────────────── */}
+      <style>{`
 
-          {/* FLOAT CARD */}
-          <div style={{
-            position: "absolute",
-            bottom: -20,
-            left: 20,
-            right: 20,
-            background: "#fff",
-            borderRadius: 14,
-            padding: "14px 18px",
-            display: "flex",
-            justifyContent: "space-between",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
-          }}>
-            <div>
-              <strong>Ksh 100K</strong>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>Max Amount</div>
-            </div>
+        * {
+          box-sizing: border-box;
+        }
 
-            <div>
-              <strong style={{ color: "#dc2626" }}>5.5%</strong>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>Interest</div>
-            </div>
+        .kcb-page {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          background: #f8fafc;
+          color: #172b4d;
+          font-family:
+            Inter,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Arial,
+            sans-serif;
+        }
 
-            <div>
-              <strong style={{ color: "#16a34a" }}>3 Steps</strong>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>Process</div>
-            </div>
-          </div>
-        </div>
+        /* HEADER */
 
-      </div>
+        .kcb-header {
+          height: 82px;
+          padding: 0 32px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
+        }
 
+        .kcb-header-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
 
-      {/* FEATURES */}
-      <div style={{
-        display: "flex",
-        gap: 20,
-        padding: "40px 80px"
-      }}>
-        {[
-          ["Quick Approval", "Get pre-approved in minutes"],
-          ["Flexible Terms", "Choose 30–90 days"],
-          ["No Hidden Fees", "Transparent pricing"]
-        ].map(([title, desc]) => (
-          <div key={title} style={{
-            flex: 1,
-            background: "#fff",
-            padding: 20,
-            borderRadius: 12,
-            textAlign: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
-          }}>
-            <div style={{ fontWeight: 700 }}>{title}</div>
-            <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
-              {desc}
-            </div>
-          </div>
-        ))}
-      </div>
+        .kcb-header-logo {
+          width: 48px;
+          height: 48px;
+          object-fit: contain;
+          display: block;
+        }
 
+        .kcb-header-title {
+          color: #172b4d;
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .kcb-help {
+          border: 0;
+          background: transparent;
+          color: #172b4d;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 8px 0;
+        }
+
+        /* HERO */
+
+        .kcb-hero-section {
+          background: #ffffff;
+        }
+
+        .kcb-hero-inner {
+          max-width: 1100px;
+          min-height: 665px;
+          margin: 0 auto;
+          padding: 82px 32px 90px;
+
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: center;
+          gap: 60px;
+        }
+
+        .kcb-hero-copy {
+          max-width: 500px;
+        }
+
+        .kcb-heading {
+          margin: 0;
+          color: #1e4178;
+          font-size: 51px;
+          line-height: 1.08;
+          letter-spacing: -1.5px;
+          font-weight: 800;
+        }
+
+        .kcb-heading span {
+          color: #ed1c24;
+        }
+
+        .kcb-subheading {
+          margin: 22px 0 0;
+          color: #53657d;
+          font-size: 18px;
+          line-height: 1.5;
+          font-weight: 400;
+        }
+
+        /* STEPS */
+
+        .kcb-steps {
+          display: flex;
+          align-items: center;
+          gap: 28px;
+          margin-top: 28px;
+          margin-bottom: 31px;
+        }
+
+        .kcb-step {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          color: #172b4d;
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .kcb-step-number {
+          width: 34px;
+          height: 34px;
+          flex-shrink: 0;
+
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #ffffff;
+          background: #1e4178;
+
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        /* BUTTON */
+
+        .kcb-apply-button {
+          height: 51px;
+          padding: 0 32px;
+
+          border: none;
+          border-radius: 8px;
+
+          background: #ed1c24;
+          color: #ffffff;
+
+          font-size: 16px;
+          font-weight: 700;
+
+          cursor: pointer;
+
+          transition:
+            background 0.2s ease,
+            transform 0.15s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .kcb-apply-button:hover {
+          background: #d91820;
+          box-shadow: 0 5px 15px rgba(237, 28, 36, 0.22);
+        }
+
+        .kcb-apply-button:active {
+          transform: translateY(1px);
+        }
+
+        /* HERO IMAGE */
+
+        .kcb-hero-visual {
+          position: relative;
+          width: 100%;
+          max-width: 510px;
+          margin-left: auto;
+          padding-bottom: 22px;
+        }
+
+        .kcb-hero-image {
+          display: block;
+          width: 100%;
+          height: auto;
+          border-radius: 17px;
+          object-fit: cover;
+
+          box-shadow:
+            0 18px 32px rgba(0, 0, 0, 0.13);
+        }
+
+        /* FLOAT CARD */
+
+        .kcb-floating-card {
+          position: absolute;
+
+          left: 16px;
+          right: 16px;
+          bottom: 0;
+
+          min-height: 82px;
+          padding: 12px 22px;
+
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+
+          background: rgba(255, 255, 255, 0.96);
+          border-radius: 13px;
+
+          box-shadow:
+            0 8px 25px rgba(0, 0, 0, 0.12);
+
+          backdrop-filter: blur(5px);
+        }
+
+        .kcb-floating-item {
+          flex: 1;
+          text-align: center;
+
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .kcb-floating-item strong {
+          color: #1e4178;
+          font-size: 23px;
+          line-height: 1;
+          font-weight: 800;
+        }
+
+        .kcb-floating-item strong.red {
+          color: #ed1c24;
+        }
+
+        .kcb-floating-item strong.green {
+          color: #159447;
+        }
+
+        .kcb-floating-item span {
+          color: #697586;
+          font-size: 12px;
+          line-height: 1.2;
+        }
+
+        .kcb-floating-divider {
+          width: 1px;
+          height: 54px;
+          background: #e5e7eb;
+        }
+
+        /* FEATURES */
+
+        .kcb-features-section {
+          background: #f7f8fa;
+          padding: 66px 32px;
+        }
+
+        .kcb-features {
+          max-width: 1100px;
+          margin: 0 auto;
+
+          display: grid;
+          grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+          gap: 32px;
+        }
+
+        .kcb-feature-card {
+          min-height: 243px;
+          padding: 25px 28px;
+
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+
+          background: #ffffff;
+          border-radius: 13px;
+
+          box-shadow:
+            0 2px 10px rgba(0, 0, 0, 0.045);
+        }
+
+        .kcb-feature-icon {
+          width: 66px;
+          height: 66px;
+
+          margin-bottom: 17px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 50%;
+          background: #e1edff;
+          color: #1e4d87;
+        }
+
+        .kcb-feature-card h3 {
+          margin: 0;
+          color: #123e75;
+          font-size: 20px;
+          line-height: 1.25;
+          font-weight: 700;
+        }
+
+        .kcb-feature-card p {
+          max-width: 280px;
+          margin: 13px 0 0;
+
+          color: #53657d;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        /* SECURITY */
+
+        .kcb-security-section {
+          min-height: 156px;
+          padding: 30px 32px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 55px;
+
+          background: #ffffff;
+        }
+
+        .kcb-security-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          color: #172b4d;
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .kcb-security-icon {
+          display: flex;
+          color: #0ca54b;
+        }
+
+        .kcb-security-icon svg {
+          width: 23px;
+          height: 23px;
+        }
+
+        /* FOOTER */
+
+        .kcb-footer {
+          margin-top: auto;
+          background: #1e4178;
+          border-top: 3px solid #153764;
+          color: #ffffff;
+        }
+
+        .kcb-footer-inner {
+          max-width: 1100px;
+          min-height: 82px;
+          margin: 0 auto;
+          padding: 0 32px;
+
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 30px;
+        }
+
+        .kcb-footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .kcb-footer-logo {
+          width: 43px;
+          height: 43px;
+          object-fit: contain;
+        }
+
+        .kcb-footer-links {
+          display: flex;
+          align-items: center;
+          gap: 27px;
+        }
+
+        .kcb-footer-links button {
+          border: none;
+          padding: 0;
+          background: transparent;
+
+          color: #ffffff;
+          font-size: 14px;
+          cursor: pointer;
+        }
+
+        .kcb-footer-copy {
+          justify-self: end;
+          color: #9bc4ff;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+
+        /* ───────────── RESPONSIVE ───────────── */
+
+        @media (max-width: 900px) {
+
+          .kcb-hero-inner {
+            grid-template-columns: 1fr;
+            padding-top: 55px;
+            padding-bottom: 75px;
+            gap: 55px;
+          }
+
+          .kcb-hero-copy {
+            max-width: 650px;
+          }
+
+          .kcb-hero-visual {
+            max-width: 600px;
+            margin: 0 auto;
+          }
+
+          .kcb-features {
+            grid-template-columns: 1fr;
+            max-width: 550px;
+          }
+
+          .kcb-footer-inner {
+            grid-template-columns: 1fr;
+            justify-items: center;
+            padding-top: 24px;
+            padding-bottom: 24px;
+            gap: 20px;
+          }
+
+          .kcb-footer-copy {
+            justify-self: center;
+          }
+        }
+
+        @media (max-width: 600px) {
+
+          .kcb-header {
+            height: 70px;
+            padding: 0 18px;
+          }
+
+          .kcb-header-logo {
+            width: 42px;
+            height: 42px;
+          }
+
+          .kcb-header-title {
+            font-size: 15px;
+          }
+
+          .kcb-hero-inner {
+            padding:
+              45px
+              20px
+              70px;
+          }
+
+          .kcb-heading {
+            font-size: 39px;
+            letter-spacing: -1px;
+          }
+
+          .kcb-subheading {
+            font-size: 16px;
+          }
+
+          .kcb-steps {
+            gap: 14px;
+            flex-wrap: wrap;
+          }
+
+          .kcb-step {
+            font-size: 14px;
+          }
+
+          .kcb-step-number {
+            width: 30px;
+            height: 30px;
+          }
+
+          .kcb-floating-card {
+            left: 8px;
+            right: 8px;
+            padding: 10px 8px;
+          }
+
+          .kcb-floating-item strong {
+            font-size: 17px;
+          }
+
+          .kcb-floating-item span {
+            font-size: 10px;
+          }
+
+          .kcb-features-section {
+            padding:
+              45px
+              20px;
+          }
+
+          .kcb-feature-card {
+            min-height: 220px;
+          }
+
+          .kcb-security-section {
+            min-height: auto;
+            padding: 35px 20px;
+
+            flex-direction: column;
+            gap: 22px;
+          }
+
+          .kcb-footer-inner {
+            padding-left: 20px;
+            padding-right: 20px;
+          }
+
+          .kcb-footer-links {
+            gap: 20px;
+          }
+
+          .kcb-footer-copy {
+            font-size: 11px;
+            white-space: normal;
+            text-align: center;
+          }
+        }
+
+      `}</style>
     </div>
   );
 }
+
+
+
+
 
 function LoadingScreen() {
   return (
